@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "FileRegExp"
+version = "0.1.0"
+description = "Regex search engine for files"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+  { name = "luilautre" }
+]
+license = { text = "MIT" }
+
+[tool.setuptools]
+py-modules = ["FileRegExp"]
