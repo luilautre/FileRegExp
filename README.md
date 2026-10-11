@@ -1,30 +1,53 @@
-# RegExpOutput — Documentation
+# FileRegExp
 
-`RegExpOutput` est un moteur de recherche par expression régulière qui parcourt **tous les fichiers d'un dossier** (contenu **et** noms de fichiers), conserve tout **en mémoire**, et n'écrit sur le disque que si `save()` est appelé.
+Recherche par expression régulière dans **tous les fichiers d'un dossier** : la regex s'applique au **contenu** de chaque fichier **et à son nom**. Les fichiers sont chargés en mémoire avec l'emplacement exact de chaque sélection ; le disque n'est modifié que lorsque `save()` est appelé.
 
 ## Installation
 
-Copier le module `regexpoutput.py` dans le projet, puis :
+Aucune dépendance externe — bibliothèque standard uniquement (Python ≥ 3.9).
+
+```bash
+pip install FileRegExp   # une fois publié sur PyPI
+```
+
+ou copier `FileRegExp.py` dans votre projet :
 
 ```python
-from regexpoutput import RegExpOutput
+from FileRegExp import FileRegExp
 ```
+
+## Démarrage rapide
+
+```python
+import re
+from FileRegExp import FileRegExp
+
+r = FileRegExp("./clients", regex=r"0(\d)\.(\d{2})\.(\d{2})\.(\d{2})\.(\d{2})")
+
+for m in r.matches():
+    print(m.file, "ligne", m.line, ":", m.text)
+
+r.replace(r"+33 \1 \2 \3 \4 \5")   # en mémoire uniquement
+r.save(make_backup=True)           # application sur le disque
+```
+
+Convertit `06.12.34.56.78` en `+33 6 12 34 56 78` dans tout le dossier, avec sauvegarde des originaux en `.bak`.
 
 ## Création
 
 ```python
-r = RegExpOutput(
-    folder,                    # dossier à parcourir entièrement
-    regex=r"motif",            # expression régulière (obligatoire)
-    extensions=(".txt", ".md"), # filtre optionnel par extension
-    recursive=False,           # True : parcourt aussi les sous-dossiers
-    max_size=None,             # taille max de fichier en octets
-    flags=re.IGNORECASE,       # flags du module re
+r = FileRegExp(
+    folder,                     # dossier à parcourir entièrement
+    regex=r"motif",             # expression régulière (obligatoire)
+    extensions=(".txt", ".md"),  # filtre optionnel par extension
+    recursive=False,            # True : parcourt aussi les sous-dossiers
+    max_size=None,              # ignore les fichiers plus gros (octets)
+    flags=re.IGNORECASE,        # flags du module re
     encoding="utf-8",
 )
 ```
 
-Le constructeur charge le contenu de chaque fichier puis lance la recherche automatiquement. La regex s'applique à deux endroits : le **contenu** de chaque fichier et son **nom**.
+La recherche est lancée automatiquement à la construction. `search()` la relance, éventuellement avec un nouveau motif.
 
 ## Exploration des résultats
 
@@ -34,12 +57,11 @@ Le constructeur charge le contenu de chaque fichier puis lance la recherche auto
 | `name_matches(file=None)` | Correspondances dans les noms de fichiers |
 | `all_matches()` | Contenu + noms, réunis |
 | `to_list()` | Export `[(fichier, texte, ligne, colonne)]` |
-| `texts()` / `groups()` | Export des textes / groupes de capture |
-| `lines()` | Lignes complètes contenant une correspondance |
-| `extract_lines()` | Export `[(fichier, ligne, ligne complète)]` |
+| `texts()` / `groups()` | Textes sélectionnés / groupes de capture |
+| `lines()` / `extract_lines()` | Lignes complètes contenant une correspondance |
 | `files()` / `files_with_matches()` | Fichiers analysés / avec correspondance |
 | `count()`, `len(r)`, `r[i]`, `iter(r)` | Nombre et accès indicé |
-| `as_text(sep="\n")` | Sélections réunies en une chaîne |
+| `as_text(sep="\n")` | Toutes les sélections en une chaîne |
 
 Chaque correspondance est un `Match` immuable : `file`, `start`, `end` (offsets en caractères), `text`, `groups`, `line`, `column` (1-based). Une correspondance de nom a `line=0` et `column=0`, avec des offsets relatifs au nom.
 
@@ -62,21 +84,12 @@ Aucune de ces méthodes ne touche le disque.
 r.save(only_dirty=True, make_backup=False, suffix=".bak")
 ```
 
-Écrit le contenu en mémoire dans les fichiers. Par défaut, seuls les fichiers modifiés sont réécrits ; avec `make_backup=True`, l'original est conservé dans un fichier `.bak`. Retourne la liste des fichiers écrits et remet `is_dirty()` à `False`.
+`save()` est la seule méthode qui écrit sur le disque : elle applique les modifications en attente. Par défaut, seuls les fichiers modifiés sont réécrits ; avec `make_backup=True`, l'original est conservé en `.bak`. Retourne la liste des fichiers écrits et remet `is_dirty()` à `False`.
 
-## Exemple complet
+## Publication
 
-```python
-import re
-from regexpoutput import RegExpOutput
+Le dépôt publie le paquet sur PyPI automatiquement lors d'une release GitHub (trusted publishing, workflow `.github/workflows/`).
 
-r = RegExpOutput("./clients", regex=r"0(\d)\.(\d{2})\.(\d{2})\.(\d{2})\.(\d{2})")
+## Licence
 
-for m in r.matches():
-    print(m.file, "ligne", m.line, ":", m.text)
-
-r.replace(r"+33 \1 \2 \3 \4 \5")   # en mémoire uniquement
-r.save(make_backup=True)           # applique sur le disque
-```
-
-Convertit `06.12.34.56.78` en `+33 6 12 34 56 78` dans tout le dossier, avec sauvegarde des originaux.
+MIT
