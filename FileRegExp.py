@@ -1,13 +1,13 @@
 """
-regexpoutput.py — Recherche regex dans tous les fichiers d'un dossier.
+FileRegExp.py — Recherche regex dans tous les fichiers d'un dossier.
 
 La regex s'applique au contenu ET au nom de chaque fichier. Les fichiers
 sont chargés en mémoire ; le disque n'est modifié que par save().
 
 Exemple :
-    from regexpoutput import RegExpOutput
+    from FileRegExp import FileRegExp
 
-    r = RegExpOutput("/mon/dossier", regex=r"\\berreur\\w*\\b")
+    r = FileRegExp("/mon/dossier", regex=r"\\berreur\\w*\\b")
     for m in r.matches():
         print(m.file, m.line, m.text)
     r.replace("OK")   # en mémoire
@@ -60,7 +60,7 @@ class _FileState:
         self.content = self.original
 
 
-class RegExpOutput:
+class FileRegExp:
     """
     Recherche regex dans tous les fichiers d'un dossier.
 
@@ -137,7 +137,7 @@ class RegExpOutput:
                 raise
             self._files[path] = _FileState(path, "")
 
-    def search(self, regex: Optional[str] = None, flags: int = 0) -> "RegExpOutput":
+    def search(self, regex: Optional[str] = None, flags: int = 0) -> "FileRegExp":
         """Relance la recherche (éventuellement avec un nouveau motif)."""
         if regex is not None:
             self._pattern = re.compile(regex, flags)
@@ -254,7 +254,7 @@ class RegExpOutput:
 
     def __str__(self) -> str:
         return (
-            f"RegExpOutput: {len(self.matches())} correspondance(s) de contenu, "
+            f"FileRegExp: {len(self.matches())} correspondance(s) de contenu, "
             f"{len(self.name_matches())} dans les noms, "
             f"{len(self.files_with_matches())}/{len(self._files)} fichier(s) "
             f"(en mémoire, rien n'est écrit sur le disque)"
@@ -299,11 +299,11 @@ class RegExpOutput:
     # Manipulation du contenu
     # ------------------------------------------------------------------ #
 
-    def remove(self, file: Optional[str] = None) -> "RegExpOutput":
+    def remove(self, file: Optional[str] = None) -> "FileRegExp":
         """Supprime le texte sélectionné du contenu courant."""
         return self.replace("", file)
 
-    def replace(self, replacement: str, file: Optional[str] = None) -> "RegExpOutput":
+    def replace(self, replacement: str, file: Optional[str] = None) -> "FileRegExp":
         """
         Remplace chaque correspondance du contenu par `replacement`,
         en mémoire uniquement. Les références \1, \g<nom> sont supportées.
@@ -316,7 +316,7 @@ class RegExpOutput:
                 state.dirty = True
         return self
 
-    def append(self, text: str, file: Optional[str] = None) -> "RegExpOutput":
+    def append(self, text: str, file: Optional[str] = None) -> "FileRegExp":
         """Ajoute du texte à la fin des fichiers."""
         targets = self._files.values() if file is None else [self._files[self._resolve(file)]]
         for state in targets:
@@ -336,7 +336,7 @@ class RegExpOutput:
             return self._files[self._resolve(file)].original
         return {p: s.original for p, s in self._files.items()}
 
-    def reset(self) -> "RegExpOutput":
+    def reset(self) -> "FileRegExp":
         """Annule toutes les modifications."""
         for state in self._files.values():
             state.content = state.original
@@ -417,9 +417,9 @@ if __name__ == "__main__":
 
     # Recherche sur le contenu et les noms
     # Groupes \1..\5 : (6)(12)(34)(56)(78) — ex. depuis "06.12.34.56.78"
-    r = RegExpOutput(tmp, regex=r"0(\d)\.(\d{2})\.(\d{2})\.(\d{2})\.(\d{2})")
+    r = FileRegExp(tmp, regex=r"0(\d)\.(\d{2})\.(\d{2})\.(\d{2})\.(\d{2})")
     print(r)
-    # RegExpOutput: 3 correspondance(s) de contenu, 0 dans les noms,
+    # FileRegExp: 3 correspondance(s) de contenu, 0 dans les noms,
     #               3/3 fichier(s) (en mémoire, rien n'est écrit sur le disque)
     # Un fichier nommé "06.bob.txt" produirait lui une correspondance de nom.
 
